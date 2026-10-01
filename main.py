@@ -1,16 +1,15 @@
 #!/usr/bin/env python3
 """
-Rock Paper Scissors (and Lizard Spock) - Python CLI Game
+Rock Paper Scissors Tournament - Host & Multi-Player Edition
 Developed by Naveen Reddy
 
 Features:
-- ANSI color styling & ASCII art hands
-- Classic & Extended Game Modes
-- Casual & Smart Pattern-Predictor AI
-- Best-of-3, Best-of-5 & Endless Modes
-- Win streaks, Stats Tracker & Round History
+- Host Management & Custom Player Names (Host can see all registered players)
+- Modes: Player vs AI/Host OR 2-Player Local PvP
+- 30-Second Original Telugu Superhit Victory Songs directly played via system audio!
 """
 
+import getpass
 import os
 import sys
 import time
@@ -21,7 +20,12 @@ from game_logic import (
     AIStrategy,
     GameStats,
     ASCII_ARTS,
+    get_random_telugu_song,
+    TELUGU_WINNER_SONGS,
 )
+from audio_player import play_winner_song_live, audio_controller
+
+MAX_GAMES_LIMIT = 10
 
 
 class Colors:
@@ -39,28 +43,32 @@ class Colors:
     BG_CYAN = "\033[46m\033[30m"
     BG_GREEN = "\033[42m\033[30m"
     BG_RED = "\033[41m\033[97m"
+    BG_YELLOW = "\033[43m\033[30m"
 
 
 def clear_screen():
     os.system("cls" if os.name == "nt" else "clear")
 
 
-def banner():
+def host_dashboard_banner(host_name: str, p1_name: str, p2_name: str, match_mode: str):
     return f"""{Colors.CYAN}{Colors.BOLD}
-===========================================================
-  🎮  ULTIMATE ROCK PAPER SCISSORS (CLI EDITION)  🎮
-             Developed by Naveen Reddy
-==========================================================={Colors.RESET}"""
+=====================================================================
+  👑  ROCK PAPER SCISSORS CHAMPIONSHIP - HOST DASHBOARD  👑
+=====================================================================
+  🎙️  HOST     : {Colors.YELLOW}{host_name}{Colors.CYAN}
+  👥  PLAYERS  : {Colors.GREEN}{p1_name}{Colors.CYAN}  VS  {Colors.RED}{p2_name}{Colors.CYAN}
+  🎯  MATCH    : {Colors.MAGENTA}{match_mode} (10 Games Tournament){Colors.CYAN}
+====================================================================={Colors.RESET}"""
 
 
-def print_side_by_side(art1: str, art2: str, label1="YOU", label2="COMPUTER"):
+def print_side_by_side(art1: str, art2: str, label1: str, label2: str):
     lines1 = [line for line in art1.strip("\n").split("\n")]
     lines2 = [line for line in art2.strip("\n").split("\n")]
     max_height = max(len(lines1), len(lines2))
-    width1 = max((len(l) for l in lines1), default=20)
+    width1 = max((len(l) for l in lines1), default=22)
 
     print(f"\n  {Colors.BOLD}{Colors.GREEN}{label1.center(width1)}{Colors.RESET}       VS       {Colors.BOLD}{Colors.RED}{label2}{Colors.RESET}")
-    print("  " + "-" * (width1 + 30))
+    print("  " + "-" * (width1 + 32))
     for i in range(max_height):
         l1 = lines1[i] if i < len(lines1) else ""
         l2 = lines2[i] if i < len(lines2) else ""
@@ -78,122 +86,189 @@ def ask_choice(prompt: str, valid_options: list, default: str = None) -> str:
         print(f"{Colors.RED}❌ Invalid option. Choose from: {', '.join(valid_options)}{Colors.RESET}")
 
 
-def select_game_mode() -> tuple:
-    print(f"\n{Colors.BOLD}{Colors.WHITE}🎯 Choose Game Mode:{Colors.RESET}")
+def setup_host_and_players() -> tuple:
+    clear_screen()
+    print(f"""{Colors.CYAN}{Colors.BOLD}
+===========================================================
+  🎮  ROCK PAPER SCISSORS - TOURNAMENT REGISTRATION  🎮
+==========================================================={Colors.RESET}""")
+
+    # 1. Host Setup
+    host_input = input(f"\n{Colors.BOLD}{Colors.YELLOW}👑 Enter Tournament Host Name (default 'Naveen Reddy'):{Colors.RESET} ").strip()
+    host_name = host_input if host_input else "Naveen Reddy"
+
+    # 2. Match Mode Selection
+    print(f"\n{Colors.BOLD}{Colors.WHITE}🎯 Select Match Type:{Colors.RESET}")
+    print(f"  [{Colors.CYAN}1{Colors.RESET}] Single Player vs Host AI ({host_name})")
+    print(f"  [{Colors.CYAN}2{Colors.RESET}] 2-Player Local PvP (Player 1 vs Player 2)")
+    match_choice = ask_choice("Select [1/2] (default 1):", ["1", "2"], default="1")
+    is_pvp = (match_choice == "2")
+
+    # 3. Player Names
+    p1_input = input(f"\n{Colors.BOLD}{Colors.GREEN}👤 Enter Player 1 Name (default 'Player 1'):{Colors.RESET} ").strip()
+    p1_name = p1_input if p1_input else "Player 1"
+
+    if is_pvp:
+        p2_input = input(f"{Colors.BOLD}{Colors.RED}👤 Enter Player 2 Name (default 'Player 2'):{Colors.RESET} ").strip()
+        p2_name = p2_input if p2_input else "Player 2"
+    else:
+        p2_name = host_name
+
+    # 4. Weapons Mode
+    print(f"\n{Colors.BOLD}{Colors.WHITE}⚔️ Select Game Weapons Mode:{Colors.RESET}")
     print(f"  [{Colors.CYAN}1{Colors.RESET}] Classic (Rock, Paper, Scissors)")
     print(f"  [{Colors.CYAN}2{Colors.RESET}] Extended (Rock, Paper, Scissors, Lizard, Spock)")
-    choice = ask_choice("Select mode [1/2] (default 1):", ["1", "2"], default="1")
-    moves = Move.classic_moves() if choice == "1" else Move.extended_moves()
+    mode_choice = ask_choice("Select mode [1/2] (default 1):", ["1", "2"], default="1")
+    moves = Move.classic_moves() if mode_choice == "1" else Move.extended_moves()
 
-    print(f"\n{Colors.BOLD}{Colors.WHITE}🤖 Choose AI Difficulty:{Colors.RESET}")
-    print(f"  [{Colors.CYAN}1{Colors.RESET}] Casual (Random selections)")
-    print(f"  [{Colors.CYAN}2{Colors.RESET}] Smart (Adaptive Markov AI that reads patterns)")
-    diff_choice = ask_choice("Select difficulty [1/2] (default 1):", ["1", "2"], default="1")
-    smart_ai = (diff_choice == "2")
+    # 5. AI Strategy if not PvP
+    smart_ai = True
+    if not is_pvp:
+        print(f"\n{Colors.BOLD}{Colors.WHITE}🤖 Choose {host_name}'s AI Strategy:{Colors.RESET}")
+        print(f"  [{Colors.CYAN}1{Colors.RESET}] Casual (Random)")
+        print(f"  [{Colors.CYAN}2{Colors.RESET}] Master (Markov Pattern Reader)")
+        diff = ask_choice("Select strategy [1/2] (default 2):", ["1", "2"], default="2")
+        smart_ai = (diff == "2")
 
-    print(f"\n{Colors.BOLD}{Colors.WHITE}🏆 Choose Match Format:{Colors.RESET}")
-    print(f"  [{Colors.CYAN}1{Colors.RESET}] Best of 3 (First to 2 wins)")
-    print(f"  [{Colors.CYAN}2{Colors.RESET}] Best of 5 (First to 3 wins)")
-    print(f"  [{Colors.CYAN}3{Colors.RESET}] Endless / Free Play")
-    target_choice = ask_choice("Select format [1/2/3] (default 3):", ["1", "2", "3"], default="3")
-    target_wins = 2 if target_choice == "1" else (3 if target_choice == "2" else 0)
-
-    return moves, smart_ai, target_wins
+    return host_name, p1_name, p2_name, is_pvp, moves, smart_ai
 
 
 def play_game():
-    clear_screen()
-    print(banner())
-    moves, smart_ai, target_wins = select_game_mode()
+    host_name, p1_name, p2_name, is_pvp, moves, smart_ai = setup_host_and_players()
     stats = GameStats()
+    raw_history = []
+    total_rounds = MAX_GAMES_LIMIT
 
-    raw_history = []  # tuple list for AI
-    round_num = 1
+    match_mode_label = "2-Player PvP" if is_pvp else f"vs AI ({host_name})"
 
     try:
-        while True:
+        for current_round in range(1, total_rounds + 1):
             clear_screen()
-            print(banner())
-            # Header info
-            mode_str = "Classic" if len(moves) == 3 else "Extended (RPSLS)"
-            ai_str = "Smart (Predictive)" if smart_ai else "Casual (Random)"
-            print(f"{Colors.DIM}Mode: {mode_str} | AI: {ai_str} | Target: {'First to ' + str(target_wins) if target_wins > 0 else 'Endless'}{Colors.RESET}")
-            print(f"{Colors.BOLD}Score: {Colors.GREEN}Player {stats.player_score}{Colors.RESET} - {Colors.RED}Computer {stats.computer_score}{Colors.RESET} (Ties: {stats.ties}){Colors.RESET}")
+            print(host_dashboard_banner(host_name, p1_name, p2_name, match_mode_label))
+            
+            # Progress & Scoreboard
+            progress_bar = "■" * (current_round - 1) + "□" * (total_rounds - current_round + 1)
+            print(f"{Colors.BOLD}Match Score  : {Colors.GREEN}{p1_name} {stats.player_score}{Colors.RESET} - {Colors.RED}{p2_name} {stats.computer_score}{Colors.RESET} (Ties: {stats.ties})")
+            print(f"{Colors.CYAN}Progress     : [{progress_bar}] ({current_round}/{total_rounds}){Colors.RESET}")
             if stats.current_streak > 1:
-                print(f"{Colors.YELLOW}🔥 Win Streak: {stats.current_streak} | Max Streak: {stats.max_streak}{Colors.RESET}")
+                print(f"{Colors.YELLOW}🔥 Win Streak : {stats.current_streak} | Max Streak: {stats.max_streak}{Colors.RESET}")
 
-            print(f"\n{Colors.BOLD}--- Round {round_num} ---{Colors.RESET}")
+            print(f"\n{Colors.BOLD}--- Game {current_round} of {total_rounds} ---{Colors.RESET}")
             options_text = " / ".join([f"{m.value.capitalize()} ({m.value[0]})" for m in moves])
-            print(f"Options: {Colors.CYAN}{options_text}{Colors.RESET} or {Colors.DIM}'q' to quit{Colors.RESET}")
+            print(f"Weapons: {Colors.CYAN}{options_text}{Colors.RESET} | Type 'q' to exit")
 
-            user_input = input(f"\n{Colors.YELLOW}Enter your move:{Colors.RESET} ").strip()
-            if user_input.lower() in ["q", "quit", "exit"]:
-                break
+            # Player 1 Move
+            while True:
+                if is_pvp:
+                    # In PvP, mask player 1 move so player 2 cannot peek
+                    print(f"\n{Colors.GREEN}{p1_name}'s Turn (Secret input):{Colors.RESET}")
+                    try:
+                        p1_input = getpass.getpass(prompt=f"{p1_name}, enter move (e.g. r/p/s): ").strip()
+                    except Exception:
+                        p1_input = input(f"{p1_name}, enter move: ").strip()
+                else:
+                    p1_input = input(f"\n{Colors.GREEN}{p1_name}, enter your move:{Colors.RESET} ").strip()
 
-            player_move = Move.from_str(user_input)
-            if not player_move or player_move not in moves:
-                print(f"{Colors.RED}❌ Invalid move! Please select one of the available choices.{Colors.RESET}")
-                time.sleep(1.2)
-                continue
+                if p1_input.lower() in ["q", "quit", "exit"]:
+                    print("\nTournament ended early by Host.")
+                    return
 
-            # Countdown effect
+                player_move = Move.from_str(p1_input)
+                if player_move and player_move in moves:
+                    break
+                print(f"{Colors.RED}❌ Invalid move! Please choose from: {options_text}{Colors.RESET}")
+
+            # Player 2 Move (AI or Human PvP)
+            if is_pvp:
+                while True:
+                    print(f"\n{Colors.RED}{p2_name}'s Turn (Secret input):{Colors.RESET}")
+                    try:
+                        p2_input = getpass.getpass(prompt=f"{p2_name}, enter move (e.g. r/p/s): ").strip()
+                    except Exception:
+                        p2_input = input(f"{p2_name}, enter move: ").strip()
+
+                    if p2_input.lower() in ["q", "quit", "exit"]:
+                        print("\nTournament ended early by Host.")
+                        return
+
+                    opponent_move = Move.from_str(p2_input)
+                    if opponent_move and opponent_move in moves:
+                        break
+                    print(f"{Colors.RED}❌ Invalid move! Please choose from: {options_text}{Colors.RESET}")
+            else:
+                if smart_ai:
+                    opponent_move = AIStrategy.get_smart_move(raw_history, moves)
+                else:
+                    opponent_move = AIStrategy.get_random_move(moves)
+
+            raw_history.append((player_move, opponent_move))
+
+            # Countdown
             print(f"\n{Colors.CYAN}Rock...{Colors.RESET}", end="", flush=True)
-            time.sleep(0.3)
+            time.sleep(0.25)
             print(f" {Colors.CYAN}Paper...{Colors.RESET}", end="", flush=True)
-            time.sleep(0.3)
+            time.sleep(0.25)
             print(f" {Colors.CYAN}Scissors...{Colors.RESET}", end="", flush=True)
-            time.sleep(0.3)
+            time.sleep(0.25)
             print(f" {Colors.BOLD}{Colors.YELLOW}SHOOT!{Colors.RESET}\n")
 
-            # Computer decision
-            if smart_ai:
-                computer_move = AIStrategy.get_smart_move(raw_history, moves)
-            else:
-                computer_move = AIStrategy.get_random_move(moves)
+            # Showdown
+            print_side_by_side(
+                ASCII_ARTS[player_move],
+                ASCII_ARTS[opponent_move],
+                f"{p1_name.upper()} ({player_move.value.upper()})",
+                f"{p2_name.upper()} ({opponent_move.value.upper()})"
+            )
 
-            raw_history.append((player_move, computer_move))
-
-            # Visual Showdown
-            print_side_by_side(ASCII_ARTS[player_move], ASCII_ARTS[computer_move], f"YOU ({player_move.value.upper()})", f"CPU ({computer_move.value.upper()})")
-
-            # Evaluate round
-            result, explanation = evaluate_round(player_move, computer_move)
-            stats.record_round(player_move, computer_move, result, explanation)
+            # Evaluate Round
+            result, explanation = evaluate_round(player_move, opponent_move)
+            # Format explanation with custom names
+            custom_exp = explanation.replace("Computer", p2_name).replace("You", p1_name)
+            stats.record_round(player_move, opponent_move, result, custom_exp)
 
             if result == Result.WIN:
-                print(f"{Colors.BG_GREEN} 🎉 ROUND WON! {Colors.RESET} {Colors.BOLD}{explanation}{Colors.RESET}")
+                print(f"{Colors.BG_GREEN} 🎉 ROUND WIN! {Colors.RESET} {Colors.BOLD}{p1_name} wins! {custom_exp}{Colors.RESET}")
             elif result == Result.LOSE:
-                print(f"{Colors.BG_RED} 💥 ROUND LOST! {Colors.RESET} {Colors.BOLD}{explanation}{Colors.RESET}")
+                print(f"{Colors.BG_RED} 💥 ROUND WIN! {Colors.RESET} {Colors.BOLD}{p2_name} wins! {custom_exp}{Colors.RESET}")
             else:
-                print(f"{Colors.YELLOW} 🤝 TIE! {explanation}{Colors.RESET}")
+                print(f"{Colors.YELLOW} 🤝 TIE ROUND! {custom_exp}{Colors.RESET}")
 
-            # Check if match ended in target win mode
-            if target_wins > 0:
-                if stats.player_score >= target_wins:
-                    print(f"\n{Colors.GREEN}{Colors.BOLD}🏆 CONGRATULATIONS! You won the match ({stats.player_score} - {stats.computer_score})! 🏆{Colors.RESET}\n")
-                    break
-                elif stats.computer_score >= target_wins:
-                    print(f"\n{Colors.RED}{Colors.BOLD}💀 GAME OVER! Computer won the match ({stats.computer_score} - {stats.player_score}).{Colors.RESET}\n")
-                    break
-
-            round_num += 1
-            input(f"\n{Colors.DIM}Press [Enter] to continue to next round...{Colors.RESET}")
+            if current_round < total_rounds:
+                input(f"\n{Colors.DIM}Host Press [Enter] for Game {current_round + 1}...{Colors.RESET}")
 
     except KeyboardInterrupt:
-        print("\n\nGame paused by user.")
+        print("\n\nTournament paused by Host.")
 
-    # Game over summary
+    # Tournament Completed - Winner Declaration
+    clear_screen()
+    print(host_dashboard_banner(host_name, p1_name, p2_name, match_mode_label))
     print(f"\n{Colors.CYAN}{Colors.BOLD}===========================================================")
-    print("                    📊 FINAL GAME STATS")
+    print(f"          🏆 10-GAMES TOURNAMENT FINAL STANDINGS 🏆")
     print(f"==========================================================={Colors.RESET}")
-    print(f"Total Rounds Played : {stats.total_rounds}")
-    print(f"Player Wins         : {Colors.GREEN}{stats.player_score}{Colors.RESET}")
-    print(f"Computer Wins       : {Colors.RED}{stats.computer_score}{Colors.RESET}")
-    print(f"Draws / Ties        : {Colors.YELLOW}{stats.ties}{Colors.RESET}")
-    print(f"Player Win Rate     : {stats.player_win_rate:.1f}%")
-    print(f"Max Win Streak      : {stats.max_streak}")
-    print(f"{Colors.CYAN}==========================================================={Colors.RESET}")
-    print(f"Developed by {Colors.BOLD}Naveen Reddy{Colors.RESET} • Star the project on GitHub ⭐\n")
+    print(f"Tournament Host       : {Colors.YELLOW}{host_name}{Colors.RESET}")
+    print(f"Total Games Played    : {stats.total_rounds} / {MAX_GAMES_LIMIT}")
+    print(f"{p1_name}'s Wins          : {Colors.GREEN}{stats.player_score}{Colors.RESET}")
+    print(f"{p2_name}'s Wins          : {Colors.RED}{stats.computer_score}{Colors.RESET}")
+    print(f"Ties / Draws          : {Colors.YELLOW}{stats.ties}{Colors.RESET}")
+    print(f"{Colors.CYAN}==========================================================={Colors.RESET}\n")
+
+    # Winner Declaration & 30-Second Original Song Playback
+    song = get_random_telugu_song()
+
+    if stats.player_score > stats.computer_score:
+        winner = p1_name
+        print(f"{Colors.BG_GREEN}{Colors.BOLD} 👑 CHAMPION: {winner.upper()} WON THE TOURNAMENT ({stats.player_score} - {stats.computer_score})! 👑 {Colors.RESET}\n")
+    elif stats.computer_score > stats.player_score:
+        winner = p2_name
+        print(f"{Colors.BG_RED}{Colors.BOLD} 👑 CHAMPION: {winner.upper()} WON THE TOURNAMENT ({stats.computer_score} - {stats.player_score})! 👑 {Colors.RESET}\n")
+    else:
+        winner = f"{p1_name} & {p2_name}"
+        print(f"{Colors.BG_YELLOW}{Colors.BOLD} 🤝 EPIC DRAW ({stats.player_score} - {stats.computer_score})! BOTH WARRIORS ARE WINNERS! 🤝 {Colors.RESET}\n")
+
+    print(f"{Colors.BOLD}{Colors.YELLOW}🎙️ Host {host_name} dedicates the victory reward track to {winner}!{Colors.RESET}")
+    play_winner_song_live(song, winner, host_name=host_name, duration=30)
+
+    print(f"\n{Colors.CYAN}Tournament completed! Thank you for playing with Host {host_name}! ⭐{Colors.RESET}\n")
 
 
 if __name__ == "__main__":

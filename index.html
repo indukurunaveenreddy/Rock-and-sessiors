@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rock Paper Scissors Masters - Play Online</title>
-    <meta name="description" content="Play the ultimate Rock Paper Scissors game featuring Classic and RPSLS modes with smart AI, streak counters, and rich sound effects.">
+    <title>Rock Paper Scissors Masters - YOU vs Naveen Reddy</title>
+    <meta name="description" content="Play the 10-game Rock Paper Scissors tournament against Naveen Reddy. Win and celebrate with Top-20 Telugu blockbuster songs!">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800;900&family=Space+Mono:wght@700&display=swap" rel="stylesheet">
@@ -17,22 +17,49 @@
         <div class="header-container">
             <div class="logo-area">
                 <span class="logo-icon">⚔️</span>
-                <h1>Rock Paper Scissors <span class="badge">PRO</span></h1>
+                <h1>Rock Paper Scissors <span class="badge">10-GAME CUP</span></h1>
             </div>
             <div class="header-actions">
+                <button id="host-manager-btn" class="btn-pill btn-host" title="Manage Tournament Host and Players">👑 Host Panel</button>
                 <button id="sound-toggle" class="btn-icon" aria-label="Toggle Sound" title="Toggle Sound">🔊</button>
-                <button id="theme-mode-btn" class="btn-pill" id="mode-btn">RPSLS Mode</button>
+                <button id="theme-mode-btn" class="btn-pill">RPSLS Mode</button>
             </div>
         </div>
     </header>
 
     <main class="main-container">
+        <!-- Host Dashboard Banner -->
+        <section class="host-banner" id="host-banner">
+            <div class="host-badge-group">
+                <span class="host-tag">👑 TOURNAMENT HOST:</span>
+                <span class="host-name-display" id="host-name-display">Naveen Reddy</span>
+            </div>
+            <div class="matchup-tag" id="matchup-display">
+                <span class="p1-tag" id="p1-header-tag">Player 1</span> vs <span class="p2-tag" id="p2-header-tag">Naveen Reddy</span>
+                <span class="mode-pill" id="match-type-pill">Single Player</span>
+            </div>
+        </section>
+
+        <!-- Tournament Progress Bar -->
+        <div class="tournament-bar-container">
+            <div class="tournament-header-text">
+                <span>🏆 10-Games Championship</span>
+                <span id="game-progress-text">Game 1 of 10</span>
+            </div>
+            <div class="progress-track">
+                <div class="progress-fill" id="progress-fill" style="width: 10%;"></div>
+            </div>
+        </div>
+
         <!-- Scoreboard -->
         <section class="scoreboard" aria-label="Scoreboard">
             <div class="score-card player-card">
                 <div class="avatar">🧑</div>
                 <div class="score-meta">
-                    <span class="player-label">YOU</span>
+                    <div class="player-name-wrapper">
+                        <label for="direct-p1-input" class="input-tiny-label">PLAYER 1 NAME:</label>
+                        <input type="text" id="direct-p1-input" class="inline-player-input" value="Player 1" placeholder="Enter Your Name" title="Click to insert your name">
+                    </div>
                     <span class="score-num" id="player-score">0</span>
                 </div>
             </div>
@@ -41,20 +68,23 @@
                 <div class="streak-badge" id="streak-badge">🔥 Streak: <span id="streak-count">0</span></div>
                 <div class="ties-text">Draws: <span id="ties-count">0</span></div>
                 <div class="ai-difficulty-selector">
-                    <label for="ai-select">AI:</label>
+                    <label for="ai-select">Strategy:</label>
                     <select id="ai-select" class="dropdown">
-                        <option value="smart">Smart AI (Markov)</option>
-                        <option value="casual">Casual AI (Random)</option>
+                        <option value="smart">Master (Markov)</option>
+                        <option value="casual">Casual (Random)</option>
                     </select>
                 </div>
             </div>
 
             <div class="score-card cpu-card">
                 <div class="score-meta right">
-                    <span class="player-label">CPU</span>
+                    <div class="player-name-wrapper right">
+                        <label for="direct-p2-input" class="input-tiny-label">OPPONENT / P2:</label>
+                        <input type="text" id="direct-p2-input" class="inline-player-input right" value="Naveen Reddy" placeholder="Opponent Name" title="Click to change opponent name">
+                    </div>
                     <span class="score-num" id="cpu-score">0</span>
                 </div>
-                <div class="avatar cpu-avatar">🤖</div>
+                <div class="avatar cpu-avatar">👑</div>
             </div>
         </section>
 
@@ -69,14 +99,14 @@
 
             <div class="arena-center">
                 <div class="vs-circle" id="vs-indicator">VS</div>
-                <div class="round-status" id="round-status">Pick your weapon to start!</div>
+                <div class="round-status" id="round-status">Pick your move for Game 1!</div>
                 <div class="round-explanation" id="round-explanation"></div>
             </div>
 
             <div class="arena-side right-fighter">
                 <div class="hand-display" id="cpu-hand-display">
                     <div class="hand-icon idle-shake mirror" id="cpu-hand-icon">✊</div>
-                    <span class="choice-tag" id="cpu-choice-tag">Waiting...</span>
+                    <span class="choice-tag" id="cpu-choice-tag">Naveen Ready</span>
                 </div>
             </div>
         </section>
@@ -116,14 +146,176 @@
         <!-- Action / History Bar -->
         <section class="history-section">
             <div class="history-header">
-                <h3>Recent Rounds</h3>
-                <button id="reset-btn" class="btn-danger">Reset Scores</button>
+                <h3>Tournament History</h3>
+                <button id="reset-btn" class="btn-danger">Restart Tournament</button>
             </div>
             <div class="history-log" id="history-log">
-                <div class="empty-history">No rounds played yet. Make a move above!</div>
+                <div class="empty-history">Tournament started! First to finish 10 games wins the title.</div>
             </div>
         </section>
     </main>
+
+    <!-- Tournament Victory Modal -->
+    <div class="modal-overlay hidden" id="victory-modal">
+        <div class="modal-card">
+            <div class="modal-trophy" id="modal-trophy">🏆</div>
+            <h2 class="modal-title" id="modal-title">TOURNAMENT WINNER!</h2>
+            <p class="modal-subtitle" id="modal-subtitle">You won the 10-games match against Naveen Reddy!</p>
+            <div class="modal-score" id="modal-score">YOU 6 - 4 NAVEEN REDDY</div>
+
+            <!-- Dedicated Winner Reward Telugu Song Box -->
+            <div class="telugu-song-box" id="telugu-song-box">
+                <div class="song-badge" id="winner-dedication-badge">🎵 30-SECOND WINNER REWARD DEDICATION 🎵</div>
+                <div class="winner-dedication-tag" id="winner-dedication-tag">Dedicated to the Champion! 👑</div>
+                
+                <div class="song-info-wrapper">
+                    <div class="song-title" id="song-title">Naatu Naatu</div>
+                    <div class="song-details" id="song-details">Movie: RRR • Singer: Rahul Sipligunj, Kaala Bhairava</div>
+                </div>
+
+                <!-- 30-Second Countdown & Visualizer -->
+                <div class="reward-timer-container">
+                    <div class="timer-row">
+                        <span class="timer-label">⏱️ Reward Playback</span>
+                        <span class="timer-countdown" id="reward-timer-text">30s / 30s</span>
+                    </div>
+                    <div class="timer-track">
+                        <div class="timer-bar" id="reward-timer-bar" style="width: 100%;"></div>
+                    </div>
+                    <!-- Animated Wave Visualizer -->
+                    <div class="audio-waves" id="audio-waves">
+                        <span class="wave-bar"></span>
+                        <span class="wave-bar"></span>
+                        <span class="wave-bar"></span>
+                        <span class="wave-bar"></span>
+                        <span class="wave-bar"></span>
+                        <span class="wave-bar"></span>
+                        <span class="wave-bar"></span>
+                    </div>
+                </div>
+
+                <!-- In-Browser Direct Audio Player & Visualizer -->
+                <div class="direct-audio-player-card" id="direct-audio-player">
+                    <div class="audio-player-status">
+                        <span class="pulse-indicator"></span>
+                        <span id="audio-status-text">Playing 30-Second Victory Celebration Beat...</span>
+                    </div>
+                    
+                    <!-- Frequency Equalizer Visualizer Canvas -->
+                    <div class="visualizer-wrapper">
+                        <canvas id="audio-visualizer" width="380" height="75"></canvas>
+                    </div>
+
+                    <!-- YouTube Embed Container — song plays in-page here -->
+                    <div id="song-iframe-container" style="width:100%;margin-top:8px;"></div>
+
+                    <!-- Player Controls Row -->
+                    <div class="song-controls-row">
+                        <button class="btn-song-action btn-audio-toggle" id="btn-audio-toggle">
+                            ⏸️ Pause
+                        </button>
+                        <button class="btn-song-action btn-shuffle-song" id="btn-shuffle-song" title="Pick another Telugu song">
+                            🔀 Shuffle Song
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <button class="btn-pill btn-restart-tournament" id="btn-modal-restart">Play New Tournament (10 Games)</button>
+        </div>
+    </div>
+
+    <!-- Player Name Entry Modal (shown on first load) -->
+    <div class="modal-overlay" id="name-entry-modal" style="z-index:9999;">
+        <div class="modal-card" style="max-width:420px;">
+            <div class="modal-trophy">🎮</div>
+            <h2 class="modal-title">ENTER YOUR NAME</h2>
+            <p class="modal-subtitle">Enter Player 1 name to start the 10-Game Championship!</p>
+            <form id="name-entry-form" style="margin-top:1.5rem;display:flex;flex-direction:column;gap:1rem;">
+                <input type="text" id="name-entry-input" class="form-input" placeholder="Your name here..." required autocomplete="off" style="font-size:1.1rem;padding:0.85rem 1.1rem;">
+                <div style="display:flex;gap:0.75rem;justify-content:center;">
+                    <button type="submit" class="btn-pill btn-primary btn-save-host" style="flex:1;">🚀 Start Tournament</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Host & Players Management Modal -->
+    <div class="modal-overlay hidden" id="host-modal">
+        <div class="modal-card host-modal-card">
+            <div class="modal-close-bar">
+                <button class="btn-icon modal-close-btn" id="host-modal-close" aria-label="Close">✕</button>
+            </div>
+            <div class="modal-trophy">👑</div>
+            <h2 class="modal-title">TOURNAMENT HOST & PLAYERS PANEL</h2>
+            <p class="modal-subtitle">As the Host, customize names, register contestants, and select tournament match modes.</p>
+
+            <form id="host-form" class="host-form">
+                <!-- Host Configuration -->
+                <div class="form-group">
+                    <label for="input-host-name">👑 Tournament Host Name:</label>
+                    <input type="text" id="input-host-name" class="form-input" value="Naveen Reddy" placeholder="Enter Host Name" required>
+                </div>
+
+                <!-- Match Type Selection -->
+                <div class="form-group">
+                    <label>🎯 Tournament Match Mode:</label>
+                    <div class="radio-toggle-group">
+                        <label class="radio-card active" id="label-mode-ai">
+                            <input type="radio" name="match-mode-radio" value="ai" checked>
+                            <span class="radio-title">🤖 Single Player vs Host AI</span>
+                            <span class="radio-desc">Player 1 battles Markov Pattern AI</span>
+                        </label>
+                        <label class="radio-card" id="label-mode-pvp">
+                            <input type="radio" name="match-mode-radio" value="pvp">
+                            <span class="radio-title">👥 2-Player Local PvP</span>
+                            <span class="radio-desc">Player 1 vs Player 2 (Local Pass & Play)</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Player Names -->
+                <div class="form-row">
+                    <div class="form-group flex-1">
+                        <label for="input-p1-name">👤 Player 1 Name:</label>
+                        <input type="text" id="input-p1-name" class="form-input" value="Player 1" placeholder="Player 1 Name" required>
+                    </div>
+                    <div class="form-group flex-1" id="p2-group">
+                        <label for="input-p2-name" id="p2-label">👤 Opponent / Player 2 Name:</label>
+                        <input type="text" id="input-p2-name" class="form-input" value="Naveen Reddy" placeholder="Opponent Name" required>
+                    </div>
+                </div>
+
+                <!-- Registered Players Roster Table -->
+                <div class="roster-section">
+                    <div class="roster-header">
+                        <h3>📋 Registered Contestants Roster</h3>
+                        <button type="button" class="btn-sm btn-secondary" id="btn-add-roster-player">+ Add Player</button>
+                    </div>
+                    <div class="roster-table-wrapper">
+                        <table class="roster-table" id="roster-table">
+                            <thead>
+                                <tr>
+                                    <th>Player Name</th>
+                                    <th>Role</th>
+                                    <th>Wins</th>
+                                    <th>Losses</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="roster-tbody">
+                                <!-- Populated dynamically by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn-pill btn-primary btn-save-host">💾 Save & Launch Tournament</button>
+                </div>
+            </form>
+        </div>
+    </div>
 
     <!-- Canvas for Confetti -->
     <canvas id="confetti-canvas"></canvas>

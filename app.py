@@ -24,9 +24,25 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
 
 def start_server():
     os.chdir(WEB_DIR)
+    socketserver.TCPServer.allow_reuse_address = True
     handler = CustomHTTPHandler
-    with socketserver.TCPServer(("", PORT), handler) as httpd:
-        url = f"http://localhost:{PORT}"
+    
+    port = PORT
+    httpd = None
+    for attempt_port in [PORT, 8080, 8081, 5500, 3000]:
+        try:
+            httpd = socketserver.TCPServer(("", attempt_port), handler)
+            port = attempt_port
+            break
+        except OSError:
+            continue
+
+    if not httpd:
+        print("❌ Could not bind to any standard port.")
+        return
+
+    with httpd:
+        url = f"http://localhost:{port}"
         print("=" * 60)
         print("  🎮 Rock Paper Scissors PRO - Web Server Running")
         print("             Developed by Naveen Reddy")

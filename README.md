@@ -13,9 +13,12 @@ Ready to deploy to **GitHub** and **GitHub Pages** with zero required external d
 
 ## ✨ Features
 
+- 🎵 **31 Blockbuster Telugu Winner Reward Songs**:
+  - Automatically awards a randomized Telugu superhit song (RRR, Ala Vaikunthapurramuloo, Devara, Jersey, Rangasthalam, Pushpa, Dhamaka, Folk sensations, etc.) dedicated to the tournament champion!
+  - Features an interactive **30-Second Winner Playback** with real-time countdown timer, dynamic visualizer wave animations, embedded mini-player, and song shuffle control.
 - 🕹️ **Dual Interfaces**:
-  - **CLI Terminal Game** (`main.py`): ANSI colored interface with side-by-side ASCII art battles and countdowns.
-  - **Modern Web App** (`web/` & `app.py`): Glassmorphic dark UI, 8-bit sound synthesizers, key bindings, and celebratory confetti particle effects.
+  - **CLI Terminal Game** (`main.py`): ANSI colored interface with side-by-side ASCII art battles, tournament scoreboard, and terminal celebration timer.
+  - **Modern Web App** (`web/` & `app.py`): Glassmorphic dark UI, 8-bit sound synthesizers, key bindings, video/audio preview player, and celebratory confetti particle effects.
 - 🤖 **Smart AI Engine**:
   - **Casual Mode**: Standard randomizer.
   - **Smart Mode**: Markov-chain pattern recognition AI that analyzes your move sequences in real-time to predict your next throw.
