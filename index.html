@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rock Paper Scissors Masters - Play Online</title>
+    <meta name="description" content="Play the ultimate Rock Paper Scissors game featuring Classic and RPSLS modes with smart AI, streak counters, and rich sound effects.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800;900&family=Space+Mono:wght@700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="background-glow"></div>
+
+    <header class="header">
+        <div class="header-container">
+            <div class="logo-area">
+                <span class="logo-icon">⚔️</span>
+                <h1>Rock Paper Scissors <span class="badge">PRO</span></h1>
+            </div>
+            <div class="header-actions">
+                <button id="sound-toggle" class="btn-icon" aria-label="Toggle Sound" title="Toggle Sound">🔊</button>
+                <button id="theme-mode-btn" class="btn-pill" id="mode-btn">RPSLS Mode</button>
+            </div>
+        </div>
+    </header>
+
+    <main class="main-container">
+        <!-- Scoreboard -->
+        <section class="scoreboard" aria-label="Scoreboard">
+            <div class="score-card player-card">
+                <div class="avatar">🧑</div>
+                <div class="score-meta">
+                    <span class="player-label">YOU</span>
+                    <span class="score-num" id="player-score">0</span>
+                </div>
+            </div>
+
+            <div class="match-info">
+                <div class="streak-badge" id="streak-badge">🔥 Streak: <span id="streak-count">0</span></div>
+                <div class="ties-text">Draws: <span id="ties-count">0</span></div>
+                <div class="ai-difficulty-selector">
+                    <label for="ai-select">AI:</label>
+                    <select id="ai-select" class="dropdown">
+                        <option value="smart">Smart AI (Markov)</option>
+                        <option value="casual">Casual AI (Random)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="score-card cpu-card">
+                <div class="score-meta right">
+                    <span class="player-label">CPU</span>
+                    <span class="score-num" id="cpu-score">0</span>
+                </div>
+                <div class="avatar cpu-avatar">🤖</div>
+            </div>
+        </section>
+
+        <!-- Battle Arena -->
+        <section class="battle-arena" aria-live="polite">
+            <div class="arena-side left-fighter">
+                <div class="hand-display" id="player-hand-display">
+                    <div class="hand-icon idle-shake" id="player-hand-icon">✊</div>
+                    <span class="choice-tag" id="player-choice-tag">Waiting...</span>
+                </div>
+            </div>
+
+            <div class="arena-center">
+                <div class="vs-circle" id="vs-indicator">VS</div>
+                <div class="round-status" id="round-status">Pick your weapon to start!</div>
+                <div class="round-explanation" id="round-explanation"></div>
+            </div>
+
+            <div class="arena-side right-fighter">
+                <div class="hand-display" id="cpu-hand-display">
+                    <div class="hand-icon idle-shake mirror" id="cpu-hand-icon">✊</div>
+                    <span class="choice-tag" id="cpu-choice-tag">Waiting...</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Weapon Controls -->
+        <section class="weapons-section">
+            <h2 class="section-title">CHOOSE YOUR MOVE</h2>
+            <div class="weapons-grid" id="weapons-grid">
+                <button class="weapon-btn" data-move="rock" id="btn-rock">
+                    <span class="weapon-emoji">🪨</span>
+                    <span class="weapon-name">Rock</span>
+                    <span class="weapon-key">Key [R]</span>
+                </button>
+                <button class="weapon-btn" data-move="paper" id="btn-paper">
+                    <span class="weapon-emoji">📄</span>
+                    <span class="weapon-name">Paper</span>
+                    <span class="weapon-key">Key [P]</span>
+                </button>
+                <button class="weapon-btn" data-move="scissors" id="btn-scissors">
+                    <span class="weapon-emoji">✂️</span>
+                    <span class="weapon-name">Scissors</span>
+                    <span class="weapon-key">Key [S]</span>
+                </button>
+                <button class="weapon-btn extended-only hidden" data-move="lizard" id="btn-lizard">
+                    <span class="weapon-emoji">🦎</span>
+                    <span class="weapon-name">Lizard</span>
+                    <span class="weapon-key">Key [L]</span>
+                </button>
+                <button class="weapon-btn extended-only hidden" data-move="spock" id="btn-spock">
+                    <span class="weapon-emoji">🖖</span>
+                    <span class="weapon-name">Spock</span>
+                    <span class="weapon-key">Key [K]</span>
+                </button>
+            </div>
+        </section>
+
+        <!-- Action / History Bar -->
+        <section class="history-section">
+            <div class="history-header">
+                <h3>Recent Rounds</h3>
+                <button id="reset-btn" class="btn-danger">Reset Scores</button>
+            </div>
+            <div class="history-log" id="history-log">
+                <div class="empty-history">No rounds played yet. Make a move above!</div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Canvas for Confetti -->
+    <canvas id="confetti-canvas"></canvas>
+
+    <footer class="footer">
+        <p>Developed with ❤️ by <strong>Naveen Reddy</strong> • Ready for GitHub & GitHub Pages</p>
+    </footer>
+
+    <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,5 @@
+# Core project operates with 0 external dependencies (Standard Library only)
+# Optional development dependencies:
+pytest>=7.4.0
+flake8>=6.1.0
+colorama>=0.4.6; platform_system == "Windows"
